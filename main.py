@@ -1,6 +1,13 @@
+import numpy as np
 import cv2
 import os
 from constants import CAMERA, RATIO, ASCII_CHARS
+
+
+@np.vectorize
+def image_to_ascii(pixel):
+    index = int(pixel / 256 * len(ASCII_CHARS))
+    return ASCII_CHARS[index]
 
 
 def main():
@@ -28,15 +35,16 @@ def main():
         cv2.imshow("Grayscale camera frame", grey_frame)
         frame = cv2.resize(grey_frame, frame_shape, interpolation=cv2.INTER_AREA)
 
-        # Make image from ASCII characters
-        ascii_image = ""
-        for y in range(frame_shape[1]):
-            for x in range(frame_shape[0]):
-                index = int(frame[y, x] / 256 * len(ASCII_CHARS))
-                ascii_image += ASCII_CHARS[index]
-            ascii_image += "\n"
+        # Convert image to ASCII text
+        char_matrix = image_to_ascii(frame)
+        column = np.full((frame_shape[1], 1), "\n")
+        column[-1] = ""
+        char_matrix = np.append(char_matrix, column, axis=1)
+        ascii_text = char_matrix.tobytes().decode("utf32")
+
+        # Print ASCII text in terminal
         os.system("cls" if os.name == "nt" else "clear")
-        print(ascii_image)
+        print(ascii_text)
 
         # Exit if Escape button is pressed
         if cv2.waitKey(1) & 0xFF == 0x1B:
